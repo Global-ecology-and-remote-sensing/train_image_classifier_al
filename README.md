@@ -273,17 +273,40 @@ Any images that lie in the top level of their directory will be
 ignored. For labelled data, the names of the subfolders in the
 top-level of the directory will be taken as the class name for
 all images that are in those folders. The names of the subfolders
-for the unlabelled directory will be ignored
+for the unlabelled directory will be ignored. Additionally, no
+top-level subfolders can contain no images. Finally, there is
+currently no way to add data to the AL program after the model
+has been initially trained.
 
 **Parameters**:
 
-- **train_data** : 
- test1
- test2
- test3  
- test4  
- test5
-
+- **train_data** : Data that the model is intially trained on
+ before active learning is performed.
+ Expects an absolute file path to a directory of images
+ Subfolders of the top
+ level of this directory must contain all of the classes that
+ could be found in the unlabelled dataset. If you think that you
+ might find images that do not belong to any of your classes then
+ it is advised to add an "Other" class that these images could be
+ assigned to.
+ 
+- **unlabelled_data** : Data that has yet to be labelled. 
+ Expects an absolute file path to a directory of images
+ Images
+ that are labelled through the active learning process will not
+ be moved from this folder even if they would technically be
+ considered as labelled at that point. Therefore, if a checkpoint
+ is deleted and external record of the new labels have been made
+ then those labels be lost. Furthermore, if you wish to retrain
+ the model from scratch using labels that you had made from a
+ previous execution of the program then an external program would
+ be required to move those labelled images from the unlabelled
+ dataset to the train dataset.
+ 
+- **validation_data** : Data used to test the model as it is
+ being trained. Expects an absolute file path to a directory of 
+ images. 
+ 
 ### Active learning
 
 **Comment** AL batch size, available sampling methods
@@ -325,6 +348,11 @@ Does not exist if validation doesn't exist
 ### Exporting model
 
 **Comment** Trained model for latest test results
+
+## Troubleshooting
+
+**Comment** Building data loader and loading model from
+checkpoint typically takes a long time so please be patient.
 
 ## Designing your own model
 
