@@ -268,15 +268,18 @@ def run_active_learning(
 **Comment** Format of data folders, train set needs all labels, unlabelled needs to be
 in subfolders, validation set of classes can be a subset of the training ones
 
+Ignored when loaded by checkpoint : True
+
 All image files must lie in subfolders of their data directory.
 Any images that lie in the top level of their directory will be
 ignored. For labelled data, the names of the subfolders in the
 top-level of the directory will be taken as the class name for
 all images that are in those folders. The names of the subfolders
-for the unlabelled directory will be ignored. Additionally, no
-top-level subfolders can contain no images. Finally, there is
+for the unlabelled directory will be ignored and no
+top-level subfolders can contain no images. 
+Additionally, There is
 currently no way to add data to the AL program after the model
-has been initially trained.
+has been initially trained. 
 
 **Parameters**:
 
@@ -305,11 +308,41 @@ has been initially trained.
  
 - **validation_data** : Data used to test the model as it is
  being trained. Expects an absolute file path to a directory of 
- images. 
+ images. Classes of this dataset can be a subset of those in the
+ train data but the names of the classes that are included must
+ exactly match those in the train data. The model is tested every
+ time new labels are added to the data and the test results can
+ be found in the [test results folder](#-validation-results) of 
+ the Active Learning Files folder.
+
+### Training Loop Parameters
+
+Ignored when loaded by checkpoint : False
+
+**Parameters**:
  
+- **validate_model** : Boolean. If True and if a test set exists,
+ test results will be generated during training. Otherwise, no
+ tests will be performed.
+
+- **use_checkpoints** : If True if a checkpoint exists, function 
+ will load model and data mappings from that checkpoint. 
+ Otherwise, it will train a model from scratch. Checkpoints are 
+ always overwritten by this program and so any progress made by 
+ old checkpoints will be lost if this is set to False.
+
+- **num_workers** : Number of workers that will train the 
+ embeddingmodel
+ and extract features in parallel. **WARNING** num_workers must 
+ be set to 0 if running on a Windows machine or else the program
+ will freeze indefinitely. This is because Windows OS blocks 
+ multi-processing requests from PyTorch.
+
 ### Active learning
 
 **Comment** AL batch size, available sampling methods
+
+
 
 ### Embedding model
 
