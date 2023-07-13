@@ -216,7 +216,7 @@ network with only two hidden layers. The embedding model is
 periodically finetuned during training whereas the
 classifier is retrained from scratch every time a batch of images
 have been labelled. From 
-[Norouzaddeh et al's study](#-acknowledgements), performance
+[Norouzaddeh et al's study](#acknowledgements), performance
 tends to improve greatly whenever the embedding model is updated
 however there are only incrementaly gains in performance when
 the classifier is re-trained.
@@ -238,16 +238,16 @@ def run_active_learning(
     validate_model : bool = True,
     use_checkpoints : bool = True,
     num_workers : int = 0,
+    output_dir = 'default',
     active_batch : int = 100, 
     active_learning_strategy : str = 'margin',
-    output_dir = 'default',
     use_pretrained : bool = True,
     embedding_arch : str = 'resnet18',
     embedding_loss_type : str =  'triplet',
     embedding_loss_margin : float = 1.0,
     embedding_loss_data_strategy : str = 'random',
-    normalize_embedding : bool = True,
     feat_dim : int = 256,
+    normalize_embedding : bool = True,
     extract_embedding_batch_size : int = 256,
     embedding_finetuning_period = 2000,
     embedding_finetuning_lr : float = 0.0001,
@@ -312,7 +312,7 @@ has been initially trained.
  train data but the names of the classes that are included must
  exactly match those in the train data. The model is tested every
  time new labels are added to the data and the test results can
- be found in the [test results folder](#-validation-results) of 
+ be found in the [test results folder](#validation-results) of 
  the Active Learning Files folder.
 
 ### Training Loop Parameters
@@ -338,34 +338,221 @@ Ignored when loaded by checkpoint : False
  will freeze indefinitely. This is because Windows OS blocks 
  multi-processing requests from PyTorch.
 
+- **output_dir** : Directory where all files that are generated
+ by the program will be stored. This includes checkpoints, label
+ requests and the trained model. If 'default' is passed to the
+ parameters then the program will create a folder in the working 
+ directory called "Active Learning Files" within which the files
+ will be stored. 
+
 ### Active learning
 
 **Comment** AL batch size, available sampling methods
 
+Ignored when loaded by checkpoint : False
 
+Parameters that change how active learning is performed.
+
+- **active_batch** : Number of images that the program will ask
+ to be labelled at each pass of the training loop.
+ 
+- **active_learning_strategy** : Strategy for choosing which 
+ images to label when active learning is performed. can
+ choose from the following list: 'uniform', 'graph_density', 
+ 'entropy', 'confidence', 'kcenter', 'margin', 
+ 'informative_diverse', 'margin_cluster_mean', 'hierarchical'.
+ Note that only the 'margin' strategy has been tested. 
 
 ### Embedding model
 
 **Comment** Available architectures, triplet loss vs softmax, 
 (I don't know what the triplet loss hyperparameters do)
 
+Ignored when loaded by checkpoint : True
+
+Parameters that define the architecture and loss function of the
+embedding model.
+
+- **use_pretrained** : Boolean. If True, the program will 
+ implement transfer learning by initialising the embedding model
+ with the pre-trained weights of the base model.
+ 
+- **embedding_arch** : Architecture of the embedding model.
+ Only resnet, inception, densenet, vgg and alexnet architectures
+ can be used by this package and using other architectures will
+ likely cause errors to occur. When choosing an architecture,
+ please pass the name of the architecture with its version number
+ as a string. The name should be exactly the same as its model
+ builder's name in the Torchvision models library. For a full
+ list of the models in this library, pleas see their 
+ [website](https://pytorch.org/vision/stable/models.html#classification)
+ 
+- **embedding_loss_type** : Loss function of embedding model. Can
+ either be 'softmax', 'triplet' or 'siamese'. Only 'softmax' and
+ 'triplet' have been tested.
+ 
+- **embedding_loss_margin** : Margin for triplet and siamese 
+ loss. Ignored if softmax loss is used.
+ 
+- **embedding_loss_data_strategy** : Data selection strategy for 
+ triplet and siamese loss. Can either be 'hardest', 'random', 
+ 'semi_hard' or 'hard_pair'. Ignored if loss type is 'softmax'.
+ Note that if loss type is 'siamese' and data selection strategy
+ is not 'hard_pair' then triplet loss will be used instead.
+
+- **feat_dim** : Number of features that the embedding model 
+ should extract from the images.
+
 ### Train and finetune embedding
 
 **Comment** Adam sampler, available hyperparameters, importance of num_epochs, balanced vs simple loader
 
+Ignored when loaded by checkpoint : False
+
+- **normalize_embedding** : Boolean. If True, embedding values
+ will be normalised. This avoids bias caused by dominating 
+ features when active learning is performed. It is highly 
+ recommended that this parameter be True unless you are certain 
+ that the features extracted by the embedding model will be of 
+ the same order of magnitude.
+ 
+- **extract_embedding_batch_size** : Batch Size when features 
+ are extracted from images.
+ 
+- **embedding_finetuning_period** : Number of images to add 
+ via active learning before the embedding is finetuned. The
+ counter that keeps track of the number of images that has
+ been added is reset after every finetuning.
+ 
+The parameters that are titled embedding_finetuning_* and
+embedding_train_* relate to the hyperparameters of the
+algorithm that trains the embedding model. The difference
+between them is that the embedding_train_* parameters are used 
+when the model is initially trained on the training set and the
+embedding_finetuning_* parameters are used after data has been
+added through active learning. The leading asterisk in the
+following parameters should be replaced with either 
+"embedding_train" or "embedding_finetuning" before the
+parameters are used.
+ 
+- **\*_lr** : Learning rate of Adam optimiser.
+
+- **\*_weight_decay** : Weight decay for Adam optimiser.
+
+- **\*_num_epochs** : Number of epochs of the data to
+ train/finetune the model on.
+ 
+- **\*_loader_type** : Data sampling method during 
+ training/finetuning. Can either be 'single' or 'balanced'. If 
+ 'single', the loader will simply shuffles the data with a batch 
+ size of 128 and then sequentially load the data into the model.
+ If 'balanced', images will be sampled so that the number of 
+ images from each class in a batch are the same, and if 
+ necessary, it will re-use images from a class if that class does
+ not have enough images.
+
+- **balanced_loader_num_classes** : Number of classes to sample 
+ from at each batch of the balanced loader. Capped at number of 
+ classes in train_data.
+
+- **balanced_loader_num_samples** : Number of images to sample 
+ from each class per batch of the balanced loader.
+
+Note, batch size of balanced loader is num_classes * num_samples. 
+
 ### Classifier
 
 **Comment** No way to edit classifier as it's hardcoded into the source code :(
+
+Unfortunately, there is currently no way to change the 
+hyperparameters of the classifier model as they are hard-coded
+into the program. If you wish to change its architecture and how
+it is trained then you will have to edit the source code.
+
+By default, the classifier is a Neural Network with two hidden
+layers. The first hidden layer consists of 230 nodes and the
+second has 100 neurons. The size of the input layer is the same
+as the dimension of the embedding and the output layer has the
+same number of nodes as there are image classes. The program
+will continue to train the model until either 2000 epochs 
+have been reached or the difference in consecutive values of
+the loss function is below 10<sup>-6</sup>. It is optimised
+using the Adam method with a learning rate of 0.0001. All
+other values are left the same as the default values in 
+Scikit-Learn's 
+[MLPClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPClassifier.html) 
+object.
+
+### Data transformations
+
+**Comment** Mention what data transformations are used during training inluding
+normalisation. Say that to apply the model, data will need to be cropped and
+normalised using the mean and std in the export folder
+
+The program will perform several image transformations to the
+data during training to improve the robustness of the model.
+Unfortunately, these transformations cannot be changed as they 
+are hard-coded into the program. Furthermore, the transformations
+are precisely as follows:
+
+1- Resize image to a 256*256 pixel square.
+
+2- Crop the image with a 224*224 pixel square at a random part of
+ the image.
+
+3- Convert the image to grayscale with a 10% probability.
+
+- Apply all of the following transformations in a random order.
+ - Flip the image horizontally with a probability of 50%.
+ - Randomly change the brightness, contrast and other aspects of
+ the colour of the image according to PyTorch's 
+ [ColourJitter](https://pytorch.org/vision/main/generated/torchvision.transforms.ColorJitter.html)
+ object.
+ - Randomly rotate the image up to 20° in either direction.
+ 
+4- Convert the image to a tensor.
+
+5- Standardise the image pixel values according to the mean and
+ the standard deviation of the the un-transformed pixels from
+ all datasets.
+ 
+Should you apply the model on a new dataset after it has been
+trained, it is advised that you resize the image as per step 1,
+crop the image at the centre to the same size as step 2, convert
+the image to a tensor like in step-4 and then standardise the
+pixel values as in step-5 before passing the data through the
+model. The pixel mean and standard deviation matrices can be
+found with the saved model weights in the 
+[export folder](#exporting-the-model).
 
 ## Active Learning Files Folder
 
 **Comment** This is where all files generated by the package are
 saved
 
+The main program will create several files and directories while
+it trains the model. These are required to checkpoint its 
+progress, load-in new labels and save the model in a format that
+can be exported to another machine. Descriptions of these 
+folders, as well as those for some other features, can be found
+in this section.
+
 ### Checkpoint folders
 
 **Comment** Needed for checkpoints, don't change or move these
 folders if you want to load from checkpoint
+
+The 'classifier', 'data' and 'embedding' folders contain all of
+the files that are required to load the training process from a
+checkpoint. Please do not remove any files from these folders or
+from the ['export'](#exporting-the-model) folder or else the 
+program will restart the training process from scratch.
+
+The classifier folder contains the saved classifier model and a
+record of which images lie in which dataset (i.e. train, 
+unlabelled or validation). The classifier model file in this 
+folder is saved using Python's pickle library and so cannot be
+guaranteed to work on different machines
 
 ### Label bin
 
@@ -378,7 +565,7 @@ latest test results, you'll have to copy the export
 folder before you submit the labels for that AL batch,
 Does not exist if validation doesn't exist
 
-### Exporting model
+### Exporting the model
 
 **Comment** Trained model for latest test results
 
@@ -405,5 +592,5 @@ et al., which tries to improve the efficieny of the training
 algorithm by performing active learning on the features extracted
 from the data rather than the images themselves.
 
-**Comment** Acknwoledgments to Megadetector, Norouzaddeh,
+**Comment** Acknwoledgments to Megadetector, Timelapse, Norouzaddeh,
 Google team for AL algorithms
