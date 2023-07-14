@@ -110,7 +110,7 @@ import logging
 logging.getLogger().setLevel(logging.INFO)
 ```
 
-### Labelling with Timelapse
+### Labelling Images
 
 **Comment** Unfinished. Need to ask Kevin if I can edit the 
 document that he gave me so that it has his name on it and that
@@ -153,7 +153,7 @@ there. If the program finds no issues with reading in the CSV
 then it will display the message "Labels were loaded 
 successfully" and continue training the model.
 
-#### Timelapse
+#### Labelling with Timelapse
 
 The timelapse selector CSV was designed to be easily read by an
 image labelling software known as Timelapse, although any image
@@ -552,11 +552,35 @@ The classifier folder contains the saved classifier model and a
 record of which images lie in which dataset (i.e. train, 
 unlabelled or validation). The classifier model file in this 
 folder is saved using Python's pickle library and so cannot be
-guaranteed to work on different machines
+guaranteed to work on different machines. 
+
+The data folder 
+contains the pickled PyTorch dataset object which is used to
+handle the data and the labels. It also contains a record of the
+what images need labels when chosen through active learning and a
+CSV file that lists labels for all images. If an image has yet to
+be labelled, it's class will be listed as "unlabelled". Thus, to
+avoid confusion it is recommended that no classes in the training
+data should be called "unlabelled".
+
+The embedding folder contains two files. The first is a matrix
+which is the embedding values for all images across all datasets.
+The second contains the model weights and other parameters that
+define the embedding model. The file for the embedding model is
+actually in a machine interoperable format but for convenience is
+saved in both this folder and in the export folder.
 
 ### Label bin
 
 **Comment** Covered by previous section but described here for completion
+
+An initially empty folder whose sole purpose is to read in 
+labels (see the section on [labelling images](#labelling-images)
+for more details). The program does not remove any files in this
+folder and so when labelling images it is recommended that you
+overwrite the same CSV file every time. Furthermore, the program
+will only look at files in the top level of the directory and
+so CSV files contained in subfolders will be safely ignored.
 
 ### Validation results
 
@@ -565,32 +589,183 @@ latest test results, you'll have to copy the export
 folder before you submit the labels for that AL batch,
 Does not exist if validation doesn't exist
 
+If a validation dataset is provided, the program will test the
+model every time before it asks for labels. The results of those
+tests will be placed in subfolders of this folder. The title of
+the folder details the total number of labelled images at the
+time of the test and contained inside that folder is the 
+confusion matrix and several test metrics.
+
+The rows of the confusion matrix correspond to the images' true
+labels and the columns are the labels that were predicted by the
+model. The classes are ordered in alphabetical order from left
+to right for columns and top to bottom for rows. If the
+validation dataset contains only a subset of the classes in the
+train set then it is possible that the confusion matrix will not
+have rows and columns for all of the classes as it will omit
+classes that have neither a true or predicted label. To see what
+classes appear in the matrix, see the 'conf_mat_classes' section
+of the metrics file. For more information on how the confusion
+matrix is generated and formatted, see the documentation on the
+[Scikit-Learn function](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.confusion_matrix.html) 
+that the program uses.
+
+The metrics file contains not only the classes of the confusion
+matrix but also several performance metrics. These metrics are
+precisely: accuracy, micro precision, micro recall, macro
+precision and macro recall. Accuracy, precision and recall are
+calculated with their usual definitions. The need to distinguish
+between "micro" and "macro" precision and recall arises from an
+ambiguity in their definitions in multi-class classification
+tasks. Descriptions on how these metrics are calculated
+can be found in the documentation of Scikit-Learn learn's
+[precision_score](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.precision_score.html)
+and
+[recall_score](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.precision_score.html)
+functions but in short, macro metrics are a simple average of
+the score across the classes and micro metrics are the 
+overall accuracy.
+
 ### Exporting the model
 
 **Comment** Trained model for latest test results
 
-## Troubleshooting
+This folder contains all of the files that you need to apply the
+trained model on a new dataset. The folder contains four files.
+The files dataset_mean.npy and dataset_std.npy should be loaded
+with NumPy's [load function](https://numpy.org/doc/stable/reference/generated/numpy.load.html)
+and are used to standardise the data before it gets fed into the
+model, see the section on [transforming the data](#data-transformations) 
+for more information. The file classifier.onnx is the classifier
+model saved in ONNX format, instructions for using it can be 
+found in [ONNX package's documentation](https://onnxruntime.ai/docs/get-started/with-python.html#scikit-learn-cv).
+The last file is called "embedding_model_weights.pt" and can be
+loaded using [PyTorch's load function](https://pytorch.org/tutorials/beginner/saving_loading_models.html#load).
+It is a dictionary that contains all of the information required 
+to recover the embedding model including: the trained weights,
+dimension of the embedding and the model that it uses as a base.
+
+It is recommended that you use the package 
+["Animal Classifier Pipeline"](https://github.com/Global-ecology-and-remote-sensing/animal_classifier_pipeline)
+to apply the model on a new dataset as it already has the
+functions for doing so. However, that package relies on the
+output of an animal detection model known as 
+[Megadetector](https://github.com/microsoft/CameraTraps/blob/main/megadetector.md)
+and therefore cannot be directly used on non-animal data.
+If your model is trained outside of an animal classification
+context then you will have to design your own program for
+applying the model. In that case, it may prove usefuly to look
+at the source code of the 
+[animal classifier pipeline](https://github.com/Global-ecology-and-remote-sensing/animal_classifier_pipeline)
+to see how the model can be applied.
+
+## Long processing times
 
 **Comment** Building data loader and loading model from
 checkpoint typically takes a long time so please be patient.
+
+There are several processes in the training loop that are known
+to take a long time. Processes such as training the embedding
+model and extracting the embedding typically take a long time
+and so the program will display progress bars while they run.
+However, there are some processes that are known to take a long
+time to run but where progress bars cannot be generated. 
+Most notably, preparing the dataset before training typically
+takes a long time as the program has to calculate the mean and
+standard deviation of all the images. Additionally, loading the
+program from a checkpoint can take a long time as the program
+has to recover the state of the dataset using Python's pickle
+library. These processes are performed before the main active
+learning loop and so usually do not have a large impact on the
+overall training time.
+
+One part of the process that may become a problem is when the
+classifier is trained. So far, the program that trains the
+classifier has only been tested on training datasets of up to
+5000 images. It may be possible that training the model for
+larger datasets may be prohibitively expensive. In that case,
+the only way to reduce the training time would be to change the
+model's architecture or training algorithm in the source code.
 
 ## Designing your own model
 
 **Comment** Brief comment on which classes might be useful
 and that you can use run_active_learning.py as an example
 
-## Cite
+There are several Python packages that let you train a model with
+active learning. The 
+[pytorch_active_learning](https://github.com/rmunro/pytorch_active_learning)
+provides scripts for training PyTorch models with AL and the 
+[modAL](https://github.com/modAL-python/modAL) package provides
+a modular framework for training Scikit-Learn models. If you wish
+to train a model on a low-dimensional dataset then these two
+packages would likely prove to be more useful.
+
+The package provided here attempts to improve the efficiency of
+the AL training algorithm in an image processing context. It does
+so by reducing the dimensionality of the data that the AL 
+algorithms query from and by only training the final 
+classification layers of the model after each batch of labels.
+The primary purpose of the "run_active_learning" function is to
+provide a way for people who are less familiar with machine
+learning models a way to easily train a model while only needing
+to manually label a small portion of their dataset.
+
+Some of the functions and classes in this package can still prove
+useful for those who would like to design their own PyTorch image
+classifier using AL. In particular, the classes
+"ExtendedImageFolder", "ActiveLearningEnvironment" and
+"LabelRetriever" can prove useful for relabelling datasets,
+keeping track of which images are labelled and interpreting new
+labels respectively. Additionally, the source code of the
+"run_active_learning" function provides an example of how to
+train a model with active learning using checkpoints.
+
+The following code can be used to import these classes after the
+package has been installed.
+
+```python
+from camera_trap_al.deep_learning.data_loader import ExtendedImageFolder
+from camera_trap_al.deep_learning.active_learning_manager import ActiveLearningEnvironment
+from camera_trap_al.utils.objects import LabelRetriever
+```
+
+## Citation
 
 **Comment** How to cite the package
 
+This package is licensed under the Apache Licence 2.0. As such,
+please cite it if you use it in your own project. when doing so,
+please include the name of the author, Gareth Lamb, and a link to
+the GitHub page.
+
+## Contact
+
+**Comment** Who to contact about the package and for HK trained models
+
 ## Acknowledgements
 
-It uses the approach described in the
-paper called "A deep active learning system for species 
-identification and counting in camera trap images" by Norouzaddeh
-et al., which tries to improve the efficieny of the training
-algorithm by performing active learning on the features extracted
-from the data rather than the images themselves.
+We would like to thank the team behind the animal detection 
+algorithm, [MegaDetector](https://github.com/microsoft/CameraTraps),
+for providing many of the functions for training and building 
+the architecture for the embedding model that are used in this
+package. The [GitHub page](https://github.com/microsoft/CameraTraps/tree/main/research/active_learning)
+for their active learning program also includes the classes that
+the "ExtendedImageFolder" and "ActiveLearningEnvironment" classes
+in this package are adapted from. We would also like to thank
+them for providing the basis for the active learning pipeline
+that the main function of this package employs. Details of this
+can be found in [their paper](https://doi.org/10.1111/2041-210X.13504), 
+the details of which are as follows.
+
+Image Processing Active Learning Paper
+- **Title** - A deep active learning system for species identification and counting in camera trap images
+- **Author** - Mohammad Sadegh Norouzzadeh, Dan Morris, Sara Beery1, Neel Joshi, Nebojsa Jojic, Jeff Clune
+- **Journal** - Methods in Ecology and Evolution
+- **Publisher** - British Ecological Society
+- **Year** - 2020
+
+
 
 **Comment** Acknwoledgments to Megadetector, Timelapse, Norouzaddeh,
 Google team for AL algorithms
