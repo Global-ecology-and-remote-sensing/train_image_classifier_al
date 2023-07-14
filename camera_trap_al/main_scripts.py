@@ -42,16 +42,16 @@ def run_active_learning(
     validate_model : bool = True,
     use_checkpoints : bool = True,
     num_workers : int = 0,
+    output_dir = 'default',
     active_batch : int = 100, 
     active_learning_strategy : str = 'margin',
-    output_dir = 'default',
     use_pretrained : bool = True,
     embedding_arch : str = 'resnet18',
     embedding_loss_type : str =  'triplet',
     embedding_loss_margin : float = 1.0,
     embedding_loss_data_strategy : str = 'random',
-    normalize_embedding : bool = True,
     feat_dim : int = 256,
+    normalize_embedding : bool = True,
     extract_embedding_batch_size : int = 256,
     embedding_finetuning_period = 2000,
     embedding_finetuning_lr : float = 0.0001,
@@ -90,12 +90,12 @@ def run_active_learning(
         WARNING num_workers must be set to 0 if running on a Windows machine
         or else the program will freeze indefinitely. This is because Windows
         OS blocks multi-processing requests from PyTorch. (Default: 0)
-    active_batch (int) : Number of queries per batch (Default : 100)
-    active_learning_strategy (str) : Strategy for choosing which images to label
-        (Default : 'margin')
     output_dir (str or PATH object) : Absolute filepath where checkpoints, labels
         and final trained model will be stored. By default, the program will create
         a folder in the working directory. (Default : 'default')
+    active_batch (int) : Number of queries per batch (Default : 100)
+    active_learning_strategy (str) : Strategy for choosing which images to label
+        (Default : 'margin')
     use_pretrained (bool) : If True, the program will implement transfer learning using
         the pre-trained weights of the base model. This parameter is ignored if a
         model is loaded from a checkpoint. (Default : True)
@@ -105,13 +105,13 @@ def run_active_learning(
     embedding_loss_margin (float): Margin for siamese or triplet loss (Default : 1.0)
     embedding_loss_data_strategy (str) : Data selection strategy for embedding model's
         loss function (Default : 'random')
+    feat_dim (int): Number of features that the embedding model should extract
+        from the images. Ignored if model is loaded from checkpoint. (Default : 256)
     normalize_embedding (bool) : If True, embedding values will be 
         normalised as to avoid bias caused by dominating features when active 
         learning is performed. It is highly recommended that this parameter be True
         unless you are certain that the features extracted by the embedding model
         will be of the same scale (Default : True)
-    feat_dim (int): Number of features that the embedding model should extract
-        from the images. Ignored if model is loaded from checkpoint. (Default : 256)
     extract_embedding_batch_size (int): Batch Size when features are extracted
         from images. (Default: 256)
     embedding_finetuning_period (int) : Number of images between when the embedding
@@ -262,7 +262,13 @@ def run_active_learning(
         )
         
         # Create a classifier (WILL NEED TO MODIFY THIS BIT FOR A CUSTOM CLASSIFIER)
-        classifier = MLPClassifier(hidden_layer_sizes=(150, 100), alpha=0.0001, max_iter= 2000)
+        classifier = MLPClassifier(
+            hidden_layer_sizes=(230, 100), 
+            alpha = 0.0001, 
+            max_iter = 2000, 
+            tol = 1e-6, 
+            learning_rate_init = 0.0001
+        )
         
         # Train Classifier
         X_train, y_train = env.get_train_set()

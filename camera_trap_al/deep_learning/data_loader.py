@@ -212,8 +212,8 @@ class ExtendedImageFolder(ImageFolder):
         
         for path, label in self.samples:
             
-            # Remove root dir from path and compile
-            paths.append(os.path.relpath(path, self.root))
+            # Compile file path
+            paths.append(path)
             
             # Decode label
             if label == self.unlab_class_num:

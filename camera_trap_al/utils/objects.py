@@ -80,7 +80,9 @@ def plot_conf_mat(count_mat, norm_mat, categories, show_plot = True, path = None
     # Display the plot
     if show_plot:
         plt.show()
-
+    
+    # Clear plot from memory
+    plt.close()
 
 class CheckpointManager():
     """

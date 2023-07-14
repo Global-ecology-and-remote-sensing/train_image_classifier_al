@@ -32,15 +32,6 @@ track of what images belong to which datasets (more information
 can be found in 
 [Designing your own model](#designing-your-own-model)).
 
-
-**Comment** Why use active learning, active learning's slow computation on
-raw images, package uses Norouzaddeh's approach in their paper, it was
-adapted from the code that they used in their paper so that it can be
-used outside of an experiment. It provides a main script "run_active_learning"
-for running active learning but it also provides the objects, active_learning_environment,
-data_set and engine which users can use for building their own image processing model.
-It also uses both timelapse and AL algorithms designed by Google.
-
 ## Why Use Active Learning?
 
 Training neural networks to classify images typically require very
@@ -54,10 +45,6 @@ the model with the most information at each stage. Algorithms that
 employ this technique are often classed under "active learning".
 
 ## Quick Start
-
-**Comment** What you need to run the program, the code that you need to run, 
-how to prepare the data, how to label
-things with timelapse. Using logging package to see info messages
 
 This package can be installed locally using PIP. To do so, download 
 the GitHub repository and run the following code, where the folder
@@ -111,10 +98,6 @@ logging.getLogger().setLevel(logging.INFO)
 ```
 
 ### Labelling Images
-
-**Comment** Unfinished. Need to ask Kevin if I can edit the 
-document that he gave me so that it has his name on it and that
-no camera trap images appear on it.
 
 As per the premise of active learning, the program will ask for
 labels as the model is being trained. To do this, it will 
@@ -170,9 +153,14 @@ to be placed in a "Species" column.
 Details on how to 
 [install and set up Timelapse](Timelapse User_Guide.pdf) 
 for this package can be found on this GitHub page. 
-
-**Comment** Need to add section on how to label images with
-Timelapse
+You will need to make sure that your template has the columns
+'Species' and 'Selected' and that it is saved in the top level
+of the unlabelled data folder. To label the images you will have
+to load in the CSV, filter images by the "Selected" column,
+label the selected images and then export the CSV to the labels
+bin. When loading in the CSV, please make sure that you deselect
+your current filter if any otherwise Timelapse will not update
+the whole "Selected" column.
 
 ### Using a GPU
 
@@ -191,15 +179,7 @@ website](https://developer.nvidia.com/cuda-toolkit). If your
 computer does not have an NVIDIA GPU then it currently cannot
 be used by this package.
 
-**Comment** Need to uninstall torch and torchvision and then re-install it with cuda.
-Also need to install cuda and NVIDIA (maybe provide link to tutorial on using cuda and
-NVIDIA)
-
 ## Training Algorithm
-
-**Comment** Parameters of main script (No elaboration as that comes later), choices for training algorithm,
-I think that when I elaborate, I should use pandas' example of have the parameter and then talk
-about it?
 
 The model that is trained by this package is actually two models
 that are executed in sequence when they are evaluated. Images are
@@ -264,9 +244,6 @@ def run_active_learning(
 ```
 
 ### Data
-
-**Comment** Format of data folders, train set needs all labels, unlabelled needs to be
-in subfolders, validation set of classes can be a subset of the training ones
 
 Ignored when loaded by checkpoint : True
 
@@ -347,8 +324,6 @@ Ignored when loaded by checkpoint : False
 
 ### Active learning
 
-**Comment** AL batch size, available sampling methods
-
 Ignored when loaded by checkpoint : False
 
 Parameters that change how active learning is performed.
@@ -364,9 +339,6 @@ Parameters that change how active learning is performed.
  Note that only the 'margin' strategy has been tested. 
 
 ### Embedding model
-
-**Comment** Available architectures, triplet loss vs softmax, 
-(I don't know what the triplet loss hyperparameters do)
 
 Ignored when loaded by checkpoint : True
 
@@ -404,8 +376,6 @@ embedding model.
  should extract from the images.
 
 ### Train and finetune embedding
-
-**Comment** Adam sampler, available hyperparameters, importance of num_epochs, balanced vs simple loader
 
 Ignored when loaded by checkpoint : False
 
@@ -462,8 +432,6 @@ Note, batch size of balanced loader is num_classes * num_samples.
 
 ### Classifier
 
-**Comment** No way to edit classifier as it's hardcoded into the source code :(
-
 Unfortunately, there is currently no way to change the 
 hyperparameters of the classifier model as they are hard-coded
 into the program. If you wish to change its architecture and how
@@ -484,10 +452,6 @@ Scikit-Learn's
 object.
 
 ### Data transformations
-
-**Comment** Mention what data transformations are used during training inluding
-normalisation. Say that to apply the model, data will need to be cropped and
-normalised using the mean and std in the export folder
 
 The program will perform several image transformations to the
 data during training to improve the robustness of the model.
@@ -527,9 +491,6 @@ found with the saved model weights in the
 
 ## Active Learning Files Folder
 
-**Comment** This is where all files generated by the package are
-saved
-
 The main program will create several files and directories while
 it trains the model. These are required to checkpoint its 
 progress, load-in new labels and save the model in a format that
@@ -538,9 +499,6 @@ folders, as well as those for some other features, can be found
 in this section.
 
 ### Checkpoint folders
-
-**Comment** Needed for checkpoints, don't change or move these
-folders if you want to load from checkpoint
 
 The 'classifier', 'data' and 'embedding' folders contain all of
 the files that are required to load the training process from a
@@ -572,8 +530,6 @@ saved in both this folder and in the export folder.
 
 ### Label bin
 
-**Comment** Covered by previous section but described here for completion
-
 An initially empty folder whose sole purpose is to read in 
 labels (see the section on [labelling images](#labelling-images)
 for more details). The program does not remove any files in this
@@ -583,11 +539,6 @@ will only look at files in the top level of the directory and
 so CSV files contained in subfolders will be safely ignored.
 
 ### Validation results
-
-**Comment** Stored in test results folder, to save model for
-latest test results, you'll have to copy the export
-folder before you submit the labels for that AL batch,
-Does not exist if validation doesn't exist
 
 If a validation dataset is provided, the program will test the
 model every time before it asks for labels. The results of those
@@ -628,8 +579,6 @@ overall accuracy.
 
 ### Exporting the model
 
-**Comment** Trained model for latest test results
-
 This folder contains all of the files that you need to apply the
 trained model on a new dataset. The folder contains four files.
 The files dataset_mean.npy and dataset_std.npy should be loaded
@@ -661,9 +610,6 @@ to see how the model can be applied.
 
 ## Long processing times
 
-**Comment** Building data loader and loading model from
-checkpoint typically takes a long time so please be patient.
-
 There are several processes in the training loop that are known
 to take a long time. Processes such as training the embedding
 model and extracting the embedding typically take a long time
@@ -688,9 +634,6 @@ the only way to reduce the training time would be to change the
 model's architecture or training algorithm in the source code.
 
 ## Designing your own model
-
-**Comment** Brief comment on which classes might be useful
-and that you can use run_active_learning.py as an example
 
 There are several Python packages that let you train a model with
 active learning. The 
@@ -732,29 +675,33 @@ from camera_trap_al.utils.objects import LabelRetriever
 
 ## Citation
 
-**Comment** How to cite the package
-
 This package is licensed under the Apache Licence 2.0. As such,
 please cite it if you use it in your own project. when doing so,
-please include the name of the author, Gareth Lamb, and a link to
-the GitHub page.
+please include the name of the author, Gareth Lamb, a link to
+the GitHub page and the NOTICE file in this repository.
 
 ## Contact
 
-**Comment** Who to contact about the package and for HK trained models
+Several models have been trained with this package for
+classifying animals that can be found in Hong Kong. If you would
+like to use these models, or if you are interested in camera trap
+projects in Hong Kong, please contact  Dr. Calvin Lee of the 
+Global Ecology and Remote Sensing Lab at the University of Hong 
+Kong at his email address, leeckf@hku.hk.
 
 ## Acknowledgements
 
 We would like to thank the team behind the animal detection 
 algorithm, [MegaDetector](https://github.com/microsoft/CameraTraps),
-for providing many of the functions for training and building 
-the architecture for the embedding model that are used in this
-package. The [GitHub page](https://github.com/microsoft/CameraTraps/tree/main/research/active_learning)
+for designing many of the functions that are used in this
+package to build and train the embedding model. The 
+[GitHub page](https://github.com/microsoft/CameraTraps/tree/main/research/active_learning)
 for their active learning program also includes the classes that
 the "ExtendedImageFolder" and "ActiveLearningEnvironment" classes
-in this package are adapted from. We would also like to thank
-them for providing the basis for the active learning pipeline
-that the main function of this package employs. Details of this
+in this package were adapted from. We would also like to thank
+them for writing the framework for the algorithm that the 
+"run_active_learning" function employs to efficiently train the
+model. Details of this
 can be found in [their paper](https://doi.org/10.1111/2041-210X.13504), 
 the details of which are as follows.
 
@@ -765,7 +712,5 @@ Image Processing Active Learning Paper
 - **Publisher** - British Ecological Society
 - **Year** - 2020
 
-
-
-**Comment** Acknwoledgments to Megadetector, Timelapse, Norouzaddeh,
-Google team for AL algorithms
+We would also like to thank the developers from Google for
+writing the active learning algorithms that this program uses.
