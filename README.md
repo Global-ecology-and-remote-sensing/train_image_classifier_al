@@ -32,7 +32,19 @@ track of what images belong to which datasets (more information
 can be found in 
 [Designing your own model](#designing-your-own-model)).
 
-## Why Use Active Learning?
+## Contents
+
+1. [Why use active learning?](#why-use-active-learning?)
+2. [Quick start](#quick-start)
+3. [Training algorithm](#training-algorithm)
+4. [Active learning files folder](#active-learning-files-folder)
+5. [Long processing times](#long-processing-times)
+6. [Designing your own model](#Designing your own model)
+7. [Citation](#citation)
+8. [Contact](#contact)
+9. [Acknowledgements](#acknowledgements)
+
+## Why use active learning?
 
 Training neural networks to classify images typically require very
 large databases of manually labelled images. In some contexts,
@@ -44,7 +56,7 @@ to label at each iteration of the training algorithm as to provide
 the model with the most information at each stage. Algorithms that
 employ this technique are often classed under "active learning".
 
-## Quick Start
+## Quick start
 
 This package can be installed locally using PIP. To do so, download 
 the GitHub repository and run the following code, where the folder
@@ -97,7 +109,7 @@ import logging
 logging.getLogger().setLevel(logging.INFO)
 ```
 
-### Labelling Images
+### Labelling images
 
 As per the premise of active learning, the program will ask for
 labels as the model is being trained. To do this, it will 
@@ -179,7 +191,7 @@ website](https://developer.nvidia.com/cuda-toolkit). If your
 computer does not have an NVIDIA GPU then it currently cannot
 be used by this package.
 
-## Training Algorithm
+## Training algorithm
 
 The model that is trained by this package is actually two models
 that are executed in sequence when they are evaluated. Images are
@@ -292,7 +304,7 @@ has been initially trained.
  be found in the [test results folder](#validation-results) of 
  the Active Learning Files folder.
 
-### Training Loop Parameters
+### Training loop parameters
 
 Ignored when loaded from checkpoint : False
 
@@ -469,12 +481,12 @@ are precisely as follows:
 3. Convert the image to grayscale with a 10% probability.
 
 4. Apply all of the following transformations in a random order.
- - Flip the image horizontally with a probability of 50%.
- - Randomly change the brightness, contrast and other aspects of
- the colour of the image according to PyTorch's 
- [ColourJitter](https://pytorch.org/vision/main/generated/torchvision.transforms.ColorJitter.html)
- object.
- - Randomly rotate the image up to 20° in either direction.
+   - Flip the image horizontally with a probability of 50%.
+   - Randomly change the brightness, contrast and other aspects of
+   the colour of the image according to PyTorch's 
+   [ColourJitter](https://pytorch.org/vision/main/generated/torchvision.transforms.ColorJitter.html)
+   object.
+   - Randomly rotate the image up to 20° in either direction.
  
 5. Convert the image to a tensor.
 
@@ -491,7 +503,7 @@ model. The pixel mean and standard deviation matrices can be
 found with the saved model weights in the 
 [export folder](#exporting-the-model).
 
-## Active Learning Files Folder
+## Active learning files folder
 
 The main program creates several files and directories while
 it trains the model. These are required to checkpoint its 
@@ -583,15 +595,18 @@ same as the accuracy metric.
 ### Exporting the model
 
 This folder contains all of the files that you need to apply the
-trained model on a new dataset. The folder contains four files.
-The files dataset_mean.npy and dataset_std.npy should be loaded
-with NumPy's [load function](https://numpy.org/doc/stable/reference/generated/numpy.load.html)
-and are used to standardise the data before it gets fed into the
-model; see the section on [transforming the data](#data-transformations) 
+trained model on a new dataset. The folder contains four files: 
+dataset_mean.npy, dataset_std.npy, classifier.onnx and
+embedding_model_weights.pt.
+The files dataset_mean.npy and dataset_std.npy are used to
+standardise the data before it gets fed into the
+model and should be loaded
+with NumPy's [load function](https://numpy.org/doc/stable/reference/generated/numpy.load.html);
+see the section on [transforming the data](#data-transformations) 
 for more information. The file classifier.onnx is the classifier
-model saved in ONNX format, instructions for using it can be 
+model saved in ONNX format. Instructions for using it can be 
 found in [ONNX package's documentation](https://onnxruntime.ai/docs/get-started/with-python.html#scikit-learn-cv).
-The last file is called "embedding_model_weights.pt" and can be
+The last file is called embedding_model_weights.pt and can be
 loaded using [PyTorch's load function](https://pytorch.org/tutorials/beginner/saving_loading_models.html#load).
 It is a dictionary that contains all of the information required 
 to recover the embedding model including: the trained weights,
@@ -605,8 +620,8 @@ output of an animal detection model known as
 [Megadetector](https://github.com/microsoft/CameraTraps/blob/main/megadetector.md)
 and therefore cannot be directly used on non-animal data.
 If your model is trained outside of an animal classification
-context then you will have to design your own program for
-applying the model. In that case, it may prove usefuly to look
+context then you will have to design your own program that can
+apply the model. In that case, it may prove useful to look
 at the source code of the 
 [animal classifier pipeline](https://github.com/Global-ecology-and-remote-sensing/animal_classifier_pipeline)
 to see how the model can be applied.
@@ -614,14 +629,16 @@ to see how the model can be applied.
 ## Long processing times
 
 There are several processes in the training loop that are known
-to take a long time. Processes such as training the embedding
-model and extracting the embedding typically take a long time
+to typically take a long time. Some of these include those that
+train the embedding model and extract the embedding
 and so the program will display progress bars while they run.
 However, there are some processes that are known to take a long
 time to run but where progress bars cannot be generated. 
-Most notably, preparing the dataset before training typically
+Most notably, those that prepare the dataset before the model is
+initially trained usually
 takes a long time as the program has to calculate the mean and
-standard deviation of all the images. Additionally, loading the
+standard deviation of the images across all data sets. 
+Additionally, loading the
 program from a checkpoint can take a long time as the program
 has to recover the state of the dataset using Python's pickle
 library. These processes are performed before the main active
@@ -634,24 +651,28 @@ classifier has only been tested on training datasets of up to
 5000 images. It may be possible that training the model for
 larger datasets may be prohibitively expensive. In that case,
 the only way to reduce the training time would be to change the
-model's architecture or training algorithm in the source code.
+classifier model's architecture or training algorithm in the 
+source code.
 
 ## Designing your own model
 
 There are several Python packages that let you train a model with
 active learning. The 
 [pytorch_active_learning](https://github.com/rmunro/pytorch_active_learning)
+github repository
 provides scripts for training PyTorch models with AL and the 
 [modAL](https://github.com/modAL-python/modAL) package provides
-a modular framework for training Scikit-Learn models. If you wish
+a modular framework for training Scikit-Learn models with it. 
+If you wish
 to train a model on a low-dimensional dataset then these two
-packages would likely prove to be more useful.
+packages would likely prove to be more useful that this one.
 
 The package provided here attempts to improve the efficiency of
 the AL training algorithm in an image processing context. It does
 so by reducing the dimensionality of the data that the AL 
-algorithms query from and by only training the final 
-classification layers of the model after each batch of labels.
+algorithms query from and by training only the final 
+classification layers of the model after each new batch of 
+labels.
 The primary purpose of the "run_active_learning" function is to
 provide a way for people who are less familiar with machine
 learning models a way to easily train a model while only needing
@@ -661,8 +682,8 @@ Some of the functions and classes in this package can still prove
 useful for those who would like to design their own PyTorch image
 classifier using AL. In particular, the classes
 "ExtendedImageFolder", "ActiveLearningEnvironment" and
-"LabelRetriever" can prove useful for relabelling datasets,
-keeping track of which images are labelled and interpreting new
+"LabelRetriever" can be used to relabel datasets,
+keep track of which images are labelled and interpret new
 labels respectively. Additionally, the source code of the
 "run_active_learning" function provides an example of how to
 train a model with active learning using checkpoints.
@@ -704,13 +725,12 @@ the "ExtendedImageFolder" and "ActiveLearningEnvironment" classes
 in this package were adapted from. We would also like to thank
 them for writing the framework for the algorithm that the 
 "run_active_learning" function employs to efficiently train the
-model. Details of this
+model. The framework
 can be found in [their paper](https://doi.org/10.1111/2041-210X.13504), 
 the details of which are as follows.
 
-Image Processing Active Learning Paper
 - **Title** - A deep active learning system for species identification and counting in camera trap images
-- **Author** - Mohammad Sadegh Norouzzadeh, Dan Morris, Sara Beery1, Neel Joshi, Nebojsa Jojic, Jeff Clune
+- **Author** - Mohammad Sadegh Norouzzadeh, Dan Morris, Sara Beery, Neel Joshi, Nebojsa Jojic, Jeff Clune
 - **Journal** - Methods in Ecology and Evolution
 - **Publisher** - British Ecological Society
 - **Year** - 2020
