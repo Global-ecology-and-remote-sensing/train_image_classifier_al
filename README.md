@@ -245,7 +245,7 @@ def run_active_learning(
 
 ### Data
 
-Ignored when loaded by checkpoint : True
+Ignored when loaded from checkpoint : True
 
 All image files must lie in subfolders of their data directory.
 Any images that lie in the top level of their directory will be
@@ -294,7 +294,7 @@ has been initially trained.
 
 ### Training Loop Parameters
 
-Ignored when loaded by checkpoint : False
+Ignored when loaded from checkpoint : False
 
 **Parameters**:
  
@@ -324,7 +324,7 @@ Ignored when loaded by checkpoint : False
 
 ### Active learning
 
-Ignored when loaded by checkpoint : False
+Ignored when loaded from checkpoint : False
 
 Parameters that change how active learning is performed.
 
@@ -340,7 +340,7 @@ Parameters that change how active learning is performed.
 
 ### Embedding model
 
-Ignored when loaded by checkpoint : True
+Ignored when loaded from checkpoint : True
 
 Parameters that define the architecture and loss function of the
 embedding model.
@@ -357,7 +357,7 @@ embedding model.
  as a string. The name should be exactly the same as its model
  builder's name in the Torchvision models library. For a full
  list of the models in this library, pleas see their 
- [website](https://pytorch.org/vision/stable/models.html#classification)
+ [website](https://pytorch.org/vision/stable/models.html#classification).
  
 - **embedding_loss_type** : Loss function of embedding model. Can
  either be 'softmax', 'triplet' or 'siamese'. Only 'softmax' and
@@ -377,7 +377,7 @@ embedding model.
 
 ### Train and finetune embedding
 
-Ignored when loaded by checkpoint : False
+Ignored when loaded from checkpoint : False
 
 - **normalize_embedding** : Boolean. If True, embedding values
  will be normalised. This avoids bias caused by dominating 
@@ -414,21 +414,22 @@ parameters are used.
  
 - **\*_loader_type** : Data sampling method during 
  training/finetuning. Can either be 'single' or 'balanced'. If 
- 'single', the loader will simply shuffles the data with a batch 
- size of 128 and then sequentially load the data into the model.
- If 'balanced', images will be sampled so that the number of 
- images from each class in a batch are the same, and if 
- necessary, it will re-use images from a class if that class does
+ 'single', the loader simply shuffles the data with a batch 
+ size of 128 and then sequentially loads the data into the model.
+ If 'balanced', images are sampled so that the number of 
+ images from each class in a batch are the same and, if 
+ necessary, it reuses images from a class if that class does
  not have enough images.
 
 - **balanced_loader_num_classes** : Number of classes to sample 
  from at each batch of the balanced loader. Capped at number of 
- classes in train_data.
+ classes in the training data.
 
 - **balanced_loader_num_samples** : Number of images to sample 
  from each class per batch of the balanced loader.
 
-Note, batch size of balanced loader is num_classes * num_samples. 
+Note that the batch size of balanced loader is 
+num_classes * num_samples. 
 
 ### Classifier
 
@@ -439,12 +440,13 @@ it is trained then you will have to edit the source code.
 
 By default, the classifier is a Neural Network with two hidden
 layers. The first hidden layer consists of 230 nodes and the
-second has 100 neurons. The size of the input layer is the same
+second has only 100. The size of the input layer is the same
 as the dimension of the embedding and the output layer has the
 same number of nodes as there are image classes. The program
 will continue to train the model until either 2000 epochs 
 have been reached or the difference in consecutive values of
-the loss function is below 10<sup>-6</sup>. It is optimised
+the loss function is below 10<sup>-6</sup>. Furethermore, 
+it is optimised
 using the Adam method with a learning rate of 0.0001. All
 other values are left the same as the default values in 
 Scikit-Learn's 
@@ -453,20 +455,20 @@ object.
 
 ### Data transformations
 
-The program will perform several image transformations to the
+The program performs several image transformations to the
 data during training to improve the robustness of the model.
 Unfortunately, these transformations cannot be changed as they 
-are hard-coded into the program. Furthermore, the transformations
+are hard-coded into the program. The transformations
 are precisely as follows:
 
-1- Resize image to a 256*256 pixel square.
+1. Resize image to a 256*256 pixel square.
 
-2- Crop the image with a 224*224 pixel square at a random part of
+2. Crop the image with a 224*224 pixel square at a random part of
  the image.
 
-3- Convert the image to grayscale with a 10% probability.
+3. Convert the image to grayscale with a 10% probability.
 
-- Apply all of the following transformations in a random order.
+4. Apply all of the following transformations in a random order.
  - Flip the image horizontally with a probability of 50%.
  - Randomly change the brightness, contrast and other aspects of
  the colour of the image according to PyTorch's 
@@ -474,24 +476,24 @@ are precisely as follows:
  object.
  - Randomly rotate the image up to 20° in either direction.
  
-4- Convert the image to a tensor.
+5. Convert the image to a tensor.
 
-5- Standardise the image pixel values according to the mean and
+6. Standardise the image pixel values according to the mean and
  the standard deviation of the the un-transformed pixels from
  all datasets.
  
 Should you apply the model on a new dataset after it has been
-trained, it is advised that you resize the image as per step 1,
-crop the image at the centre to the same size as step 2, convert
-the image to a tensor like in step-4 and then standardise the
-pixel values as in step-5 before passing the data through the
+trained, it is advised that you resize the image as per Step-1,
+crop the image at the centre to the same size as Step-2, convert
+the image to a tensor like in Step-5 and then standardise the
+pixel values as in Step-6 before passing the data through the
 model. The pixel mean and standard deviation matrices can be
 found with the saved model weights in the 
 [export folder](#exporting-the-model).
 
 ## Active Learning Files Folder
 
-The main program will create several files and directories while
+The main program creates several files and directories while
 it trains the model. These are required to checkpoint its 
 progress, load-in new labels and save the model in a format that
 can be exported to another machine. Descriptions of these 
@@ -509,15 +511,16 @@ program will restart the training process from scratch.
 The classifier folder contains the saved classifier model and a
 record of which images lie in which dataset (i.e. train, 
 unlabelled or validation). The classifier model file in this 
-folder is saved using Python's pickle library and so cannot be
-guaranteed to work on different machines. 
+folder is saved using Python's pickle library and so it cannot be
+guaranteed to be possible to load it on a different machine. 
 
 The data folder 
 contains the pickled PyTorch dataset object which is used to
 handle the data and the labels. It also contains a record of the
 what images need labels when chosen through active learning and a
-CSV file that lists labels for all images. If an image has yet to
-be labelled, it's class will be listed as "unlabelled". Thus, to
+CSV file that lists the labels for all images. If an image has 
+yet to
+be labelled, its class is listed as "unlabelled". Thus, to
 avoid confusion it is recommended that no classes in the training
 data should be called "unlabelled".
 
@@ -572,10 +575,10 @@ tasks. Descriptions on how these metrics are calculated
 can be found in the documentation of Scikit-Learn learn's
 [precision_score](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.precision_score.html)
 and
-[recall_score](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.precision_score.html)
+[recall_score](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.recall_score.html)
 functions but in short, macro metrics are a simple average of
 the score across the classes and micro metrics are the 
-overall accuracy.
+same as the accuracy metric.
 
 ### Exporting the model
 
@@ -584,7 +587,7 @@ trained model on a new dataset. The folder contains four files.
 The files dataset_mean.npy and dataset_std.npy should be loaded
 with NumPy's [load function](https://numpy.org/doc/stable/reference/generated/numpy.load.html)
 and are used to standardise the data before it gets fed into the
-model, see the section on [transforming the data](#data-transformations) 
+model; see the section on [transforming the data](#data-transformations) 
 for more information. The file classifier.onnx is the classifier
 model saved in ONNX format, instructions for using it can be 
 found in [ONNX package's documentation](https://onnxruntime.ai/docs/get-started/with-python.html#scikit-learn-cv).
