@@ -39,7 +39,7 @@ can be found in
 3. [Training algorithm](#training-algorithm)
 4. [Active learning files folder](#active-learning-files-folder)
 5. [Long processing times](#long-processing-times)
-6. [Designing your own model](#Designing your own model)
+6. [Designing your own model](#designing-your-own-model)
 7. [Citation](#citation)
 8. [Contact](#contact)
 9. [Acknowledgements](#acknowledgements)
