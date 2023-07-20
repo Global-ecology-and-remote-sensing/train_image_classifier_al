@@ -1,0 +1,25 @@
+Written by Lo Ching Hei of the Remote Sensing and Global Ecology Lab at HKU.
+Adapted by Gareth Lamb
+
+Timelapse is a GUI that allows users to process and label images or video. Timelapse also allows users to review image recognition and classification with [Microsoft Megadetector](https://github.com/microsoft/CameraTraps/blob/main/megadetector.md).  
+### Installation Timelapse
+Installation link: [Timelapse: Download and Installation](https://saul.cpsc.ucalgary.ca/timelapsse/pmwiki.php?n=Main.Download2)
+
+### Timelapse Template
+After installation, you need to first create a Timelapse Template before labelling the photos.
+#### Steps to create a Timelapse Template
+1. Open **“Timelapse2TemplateEditor”** in Timelapse file
+2. Click **“File”** and **“New template…”** to create the template.
+3. _Save your template in the folder for unlabelled data and not in any subfolders of it._ 
+4. Click **"Choice"** under Add and change Label to Species.
+   - Click on Define list to add the species you want to label. 
+   - You can also add other labels such as "Count", which allows you to count how many animsals are present in the image.
+     However, this will not be used by the package.
+5. Quit Timelapse Template Editor after you finish editing, the template will save automatically after you close the window.
+### Timelapse 
+ After you created the template, you are now able to label your images/videos using Timelapse.
+1. Open **"Timelapse2"** in Timelapse file.
+2. Click **"File template"** and **"Load template, images, and video files..."** to open the template you created.
+   - To review the results of Megadetector, you can click **"Recognition"** and import the output from Megadetector (JSON file).
+3. Label the images and review the data from the **"Data Table"** tab.
+4. After labeling all the images, click **"File"** and export the data to a CSV file.

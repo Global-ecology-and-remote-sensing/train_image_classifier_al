@@ -159,11 +159,11 @@ by ecologists and animal conservation groups for analysing
 This package was orginally designed to help ecologists build
 models that can sort databases of animal images by 
 automating large parts of the training algorithm, which is why
-it is desinged to work with Timelapse and why image labels need
+it was designed to work with Timelapse and why image labels need
 to be placed in a "Species" column.
 
 Details on how to 
-[install and set up Timelapse](Timelapse User_Guide.pdf) 
+[install and set up Timelapse](TimelapseGuide.txt) 
 for this package can be found on this GitHub page. 
 You will need to make sure that your template has the columns
 'Species' and 'Selected' and that it is saved in the top level
