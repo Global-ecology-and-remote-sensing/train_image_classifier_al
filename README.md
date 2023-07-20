@@ -199,7 +199,7 @@ or video. Timelapse also allows users to review image recognition
 and classification with 
 [Microsoft Megadetector](https://github.com/microsoft/CameraTraps/blob/main/megadetector.md).  
 
-### Installation Timelapse
+### Install Timelapse
 
 Installation link: 
 [Timelapse: Download and Installation](https://saul.cpsc.ucalgary.ca/timelapsse/pmwiki.php?n=Main.Download2)
@@ -214,31 +214,105 @@ before labelling the photos.
 1. Open **“Timelapse2TemplateEditor”** in Timelapse file
 2. Click **“File”** and **“New template…”** to create the 
  template.
-3. _Save your template in the folder for unlabelled data and not 
- in any subfolders of it._ 
-4. Click **"Choice"** under Add and change Label to Species.
-   - Click on Define list to add the species you want to label. 
+3. _Save your template in the top level of the folder for 
+ unlabelled data and not in any subfolders of it._ 
+4. Click **"Choice"** under "Add" and change "Data Label" to 
+ "Species".
+   - Click on "Define List" under "List" to add the species 
+     you want to label.
+     The names of the classes must match those that 
+	 appear in the train dataset exactly.
+   
+5. Again under "Add", click the **"Flag"** button and change the
+ "Data Label" to "Selected".
    - You can also add other labels such as "Count", which allows 
      you to count how many animsals are present in the image.
      However, this will not be used by the package.
-5. Quit Timelapse Template Editor after you finish editing, the 
+	 
+6. Quit Timelapse Template Editor after you finish editing, the 
  template will save automatically after you close the window.
 
-### Timelapse 
+**Warning** A known error occurs when you set up the timelapse
+template before the run_active_learning program is run. This
+happens because Timelapse will produce a folder called "backup" 
+in the same directory as the template which causes the
+PyTorch ImageFolder class to raise an error as it expects that
+all subfolders contain at least one image. To work around this,
+please close Timelapse and delete the backup folder that it 
+creates before you first run the run_active_learning script. This
+error does not occur after the model has been initially trained
+on the train data folder or when the process is started from a
+checkpoint as by that point the program has already located all
+of the data.
+
+### Labelling with Timelapse 
 
 After you created the template, you are now able to label your 
-images/videos using Timelapse.
+images/videos using Timelapse. To set up the Timelapse labeler,
+perform the following steps.
 
 1. Open **"Timelapse2"** in Timelapse file.
 2. Click **"File template"** and **"Load template, images, and 
  video files..."** to open the template you created.
-   - To review the results of Megadetector, you can click 
-   **"Recognition"** and import the output from Megadetector 
-   (JSON file).
-3. Label the images and review the data from the **"Data Table"**
- tab.
-4. After labeling all the images, click **"File"** and export the
- data to a CSV file.
+ 
+Once the Timelapse program has been set up, simply run the
+run_active_learning program and wait for the following message to
+appear.
+
+```console
+Timelapse data selector file has been updated.
+Please import it into the Timelapse database.
+
+
+Please place exported Timelapse CSV in the labels bin at
+"path\to\labels\bin"
+
+Press enter when you have placed the labels in the labels bin
+```
+
+This message tells you that the program has chosen some images
+that need labelling. To import this selection into Timelapse,
+do the following steps.
+
+1. Under the **"File"** tab, click on 
+ "Import data from a .csv file ...". Import the 
+ timelapse_selector.csv file in the top level of the Active 
+ Learning Folder. Timelapse will likely raise a warning saying
+ that the DateTime column was not updated but that can be safely
+ ignored as that is not used by the package.
+2. Click on the **"Select"** tab and select "Custom Selection".
+ Check the box for the "Selected" column and check the Value 
+ checkbox for this variable (i.e. filter images such that 
+ "Selected" is True).
+3. Press the "Okay" button in the bottom-right to confirm your
+ selection. The number of files that match your query should be
+ precisely that of the active_batch size of the 
+ run_active_learning program.
+ 
+At this point, the selected images can be viewed from either the
+"Image set" or "Data table" tab in the lower window. The images
+can be labelled by scrolling through them in the "Image set" tab
+and assigning their label in the Species drop-down menu. It is
+important to note that no images can be deleted or else the 
+package will not continue the training algorithm. After labeling
+all the images for this batch, click **"File"**, "export
+data in the current selection as a CSV file" and save the
+file to the new_labels_bin folder of the Active Learning Files
+folder. 
+
+Finally, the data must be deselected before the next
+batch of images are chosen or else Timelapse will not update the
+"Selected" column for the whole dataset when the new
+timelapse_selector.csv file is loaded in. To do so, simply return
+to the "custom_selection..." option in the "Select" tab and click
+on the "Reset to All Images" in the bottom-left and press "Okay".
+After this, press enter on the Python command line to submit the
+labels and, if they can be loaded successfully, wait for the
+program to request the next batch of labels.
+
+This section on using Timelapse was written in collaboration with
+Lo Ching Hei while he worked at the the Remote Sensing and Global 
+Ecology Lab at the University of Hong Kong.
 
 ## Training algorithm
 
